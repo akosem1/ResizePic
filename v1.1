@@ -1,0 +1,448 @@
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+
+# יצירת הטופס הראשי
+$form = New-Object System.Windows.Forms.Form
+$form.Text = "כלי להקטנת תמונות"
+$form.Size = New-Object System.Drawing.Size(650, 550)
+$form.StartPosition = "CenterScreen"
+$form.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+$form.RightToLeft = [System.Windows.Forms.RightToLeft]::Yes # תמיכה בעברית
+$form.AllowDrop = $true # הפעלת תמיכה בגרירה ושחרור
+
+# יצירת כפתור לבחירת תמונה
+$btnSelectImage = New-Object System.Windows.Forms.Button
+$btnSelectImage.Location = New-Object System.Drawing.Point(450, 20)
+$btnSelectImage.Size = New-Object System.Drawing.Size(120, 30)
+$btnSelectImage.Text = "בחר תמונה"
+$form.Controls.Add($btnSelectImage)
+
+# תיבת טקסט להצגת נתיב הקובץ
+$txtImagePath = New-Object System.Windows.Forms.TextBox
+$txtImagePath.Location = New-Object System.Drawing.Point(20, 20)
+$txtImagePath.Size = New-Object System.Drawing.Size(420, 30)
+$txtImagePath.ReadOnly = $true
+$form.Controls.Add($txtImagePath)
+
+# תווית לרוחב
+$lblWidth = New-Object System.Windows.Forms.Label
+$lblWidth.Location = New-Object System.Drawing.Point(510, 70)
+$lblWidth.Size = New-Object System.Drawing.Size(60, 25)
+$lblWidth.Text = "רוחב:"
+$form.Controls.Add($lblWidth)
+
+# תיבת טקטס לרוחב
+$txtWidth = New-Object System.Windows.Forms.TextBox
+$txtWidth.Location = New-Object System.Drawing.Point(400, 70)
+$txtWidth.Size = New-Object System.Drawing.Size(100, 25)
+$form.Controls.Add($txtWidth)
+
+# תווית לגובה
+$lblHeight = New-Object System.Windows.Forms.Label
+$lblHeight.Location = New-Object System.Drawing.Point(320, 70)
+$lblHeight.Size = New-Object System.Drawing.Size(60, 25)
+$lblHeight.Text = "גובה:"
+$form.Controls.Add($lblHeight)
+
+# תיבת טקסט לגובה
+$txtHeight = New-Object System.Windows.Forms.TextBox
+$txtHeight.Location = New-Object System.Drawing.Point(210, 70)
+$txtHeight.Size = New-Object System.Drawing.Size(100, 25)
+$form.Controls.Add($txtHeight)
+
+# תיבת סימון לנעילת יחס XY
+$chkLockRatio = New-Object System.Windows.Forms.CheckBox
+$chkLockRatio.Location = New-Object System.Drawing.Point(400, 105)
+$chkLockRatio.Size = New-Object System.Drawing.Size(170, 25)
+$chkLockRatio.Text = "נעל יחס גובה-רוחב"
+$chkLockRatio.Checked = $true
+$form.Controls.Add($chkLockRatio)
+
+# תווית לאיכות
+$lblQuality = New-Object System.Windows.Forms.Label
+$lblQuality.Location = New-Object System.Drawing.Point(140, 70)
+$lblQuality.Size = New-Object System.Drawing.Size(60, 25)
+$lblQuality.Text = "איכות:"
+$form.Controls.Add($lblQuality)
+
+# מחוון לאיכות
+$trackQuality = New-Object System.Windows.Forms.TrackBar
+$trackQuality.Location = New-Object System.Drawing.Point(20, 70)
+$trackQuality.Size = New-Object System.Drawing.Size(120, 45)
+$trackQuality.Minimum = 1
+$trackQuality.Maximum = 100
+$trackQuality.Value = 80
+$trackQuality.TickFrequency = 10
+$form.Controls.Add($trackQuality)
+
+# תווית להצגת ערך האיכות
+$lblQualityValue = New-Object System.Windows.Forms.Label
+$lblQualityValue.Location = New-Object System.Drawing.Point(80, 115)
+$lblQualityValue.Size = New-Object System.Drawing.Size(60, 25)
+$lblQualityValue.Text = "80%"
+$form.Controls.Add($lblQualityValue)
+
+# יצירת קופסת תצוגה לתמונה המקורית
+$lblOriginalImage = New-Object System.Windows.Forms.Label
+$lblOriginalImage.Location = New-Object System.Drawing.Point(450, 125)
+$lblOriginalImage.Size = New-Object System.Drawing.Size(120, 25)
+$lblOriginalImage.Text = "תמונה מקורית:"
+$form.Controls.Add($lblOriginalImage)
+
+$picBoxOriginal = New-Object System.Windows.Forms.PictureBox
+$picBoxOriginal.Location = New-Object System.Drawing.Point(20, 150)
+$picBoxOriginal.Size = New-Object System.Drawing.Size(270, 250)
+$picBoxOriginal.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::Zoom
+$picBoxOriginal.AllowDrop = $true # הפעלת תמיכה בגרירה ושחרור
+$form.Controls.Add($picBoxOriginal)
+
+# הוספת תווית עם הנחיה לגרירת תמונה
+$lblDragDrop = New-Object System.Windows.Forms.Label
+$lblDragDrop.Location = New-Object System.Drawing.Point(20, 150)
+$lblDragDrop.Size = New-Object System.Drawing.Size(270, 250)
+$lblDragDrop.Text = "גרור תמונה לכאן"
+$lblDragDrop.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
+$lblDragDrop.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
+$lblDragDrop.BackColor = [System.Drawing.Color]::LightGray
+$form.Controls.Add($lblDragDrop)
+
+# יצירת קופסת תצוגה לתמונה המוקטנת
+$lblResizedImage = New-Object System.Windows.Forms.Label
+$lblResizedImage.Location = New-Object System.Drawing.Point(230, 125)
+$lblResizedImage.Size = New-Object System.Drawing.Size(120, 25)
+$lblResizedImage.Text = "תצוגה מקדימה:"
+$form.Controls.Add($lblResizedImage)
+
+$picBoxResized = New-Object System.Windows.Forms.PictureBox
+$picBoxResized.Location = New-Object System.Drawing.Point(300, 150)
+$picBoxResized.Size = New-Object System.Drawing.Size(270, 250)
+$picBoxResized.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::Zoom
+$form.Controls.Add($picBoxResized)
+
+# תווית להצגת גודל הקובץ המקורי
+$lblOriginalSize = New-Object System.Windows.Forms.Label
+$lblOriginalSize.Location = New-Object System.Drawing.Point(20, 410)
+$lblOriginalSize.Size = New-Object System.Drawing.Size(270, 25)
+$lblOriginalSize.Text = "גודל מקורי: "
+$form.Controls.Add($lblOriginalSize)
+
+# תווית להצגת גודל הקובץ החדש (תצוגה מקדימה)
+$lblNewSize = New-Object System.Windows.Forms.Label
+$lblNewSize.Location = New-Object System.Drawing.Point(300, 410)
+$lblNewSize.Size = New-Object System.Drawing.Size(270, 25)
+$lblNewSize.Text = "גודל מוערך: "
+$form.Controls.Add($lblNewSize)
+
+# כפתור להקטנת התמונה ושמירה
+$btnResize = New-Object System.Windows.Forms.Button
+$btnResize.Location = New-Object System.Drawing.Point(450, 440)
+$btnResize.Size = New-Object System.Drawing.Size(120, 30)
+$btnResize.Text = "הקטן ושמור"
+$btnResize.Enabled = $false
+$form.Controls.Add($btnResize)
+
+# קובץ תמונה נוכחי
+$global:currentImage = $null
+$global:originalFilePath = ""
+$global:aspectRatio = 1.0  # יחס ברירת מחדל
+
+# אירוע לעדכון ערך האיכות
+$trackQuality.add_ValueChanged({
+    $lblQualityValue.Text = "$($trackQuality.Value)%"
+    Update-Preview
+})
+
+# אירוע לעדכון אוטומטי של גובה לפי רוחב, כאשר יחס הגובה-רוחב נעול
+$txtWidth.add_TextChanged({
+    if ($chkLockRatio.Checked -and $global:aspectRatio -gt 0) {
+        # ניסיון לפרש את הערך
+        $width = 0
+        if ([int]::TryParse($txtWidth.Text, [ref]$width) -and $width -gt 0) {
+            # חישוב הגובה החדש תוך שמירה על יחס הגובה-רוחב
+            $newHeight = [math]::Round($width / $global:aspectRatio)
+            
+            # עדכון תיבת הטקסט של הגובה מבלי להפעיל את אירוע הטקסט המשתנה שלה
+            if ($txtHeight.Text -ne $newHeight.ToString()) {
+                $txtHeight.Text = $newHeight.ToString()
+            }
+        }
+    }
+    Update-Preview
+})
+
+# אירוע לעדכון אוטומטי של רוחב לפי גובה, כאשר יחס הגובה-רוחב נעול
+$txtHeight.add_TextChanged({
+    if ($chkLockRatio.Checked -and $global:aspectRatio -gt 0) {
+        # ניסיון לפרש את הערך
+        $height = 0
+        if ([int]::TryParse($txtHeight.Text, [ref]$height) -and $height -gt 0) {
+            # חישוב הרוחב החדש תוך שמירה על יחס הגובה-רוחב
+            $newWidth = [math]::Round($height * $global:aspectRatio)
+            
+            # עדכון תיבת הטקסט של הרוחב מבלי להפעיל את אירוע הטקסט המשתנה שלה
+            if ($txtWidth.Text -ne $newWidth.ToString()) {
+                $txtWidth.Text = $newWidth.ToString()
+            }
+        }
+    }
+    Update-Preview
+})
+
+# פונקציה לטיפול בקובץ תמונה
+function Process-ImageFile {
+    param (
+        [string]$filePath
+    )
+    
+    # וידוא שהקובץ קיים
+    if (-not (Test-Path $filePath)) {
+        return
+    }
+    
+    # בדיקה שמדובר בקובץ תמונה
+    $extension = [System.IO.Path]::GetExtension($filePath).ToLower()
+    if ($extension -notin @(".jpg", ".jpeg", ".png", ".bmp", ".gif")) {
+        [System.Windows.Forms.MessageBox]::Show("רק קבצי תמונה נתמכים (jpg, jpeg, png, bmp, gif)", "שגיאה", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        return
+    }
+    
+    try {
+        $txtImagePath.Text = $filePath
+        $global:originalFilePath = $filePath
+        $global:currentImage = [System.Drawing.Image]::FromFile($filePath)
+
+        # עדכון תצוגה מקדימה
+        $picBoxOriginal.Image = $global:currentImage
+        
+        # הסתרת תווית גרירה ושחרור
+        $lblDragDrop.Visible = $false
+
+        # חישוב יחס הגובה-רוחב
+        $global:aspectRatio = $global:currentImage.Width / $global:currentImage.Height
+        $txtWidth.Text = $global:currentImage.Width.ToString()
+        $txtHeight.Text = $global:currentImage.Height.ToString()
+
+        # עדכון גודל הקובץ המקורי
+        $lblOriginalSize.Text = "גודל מקורי: " + (Get-FileSizeInMB $filePath) + " MB"
+
+        # עדכון תצוגה של תצוגה מקדימה עם גודל התמונה הנוכחי
+        Update-Preview
+
+        # הפעלת כפתור השמירה
+        $btnResize.Enabled = $true
+    }
+    catch {
+        [System.Windows.Forms.MessageBox]::Show("שגיאה בטעינת הקובץ: " + $_.Exception.Message, "שגיאה", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+    }
+}
+
+# פונקציה לעדכון התצוגה המקדימה
+function Update-Preview {
+    if ($global:currentImage) {
+        $width = 0
+        $height = 0
+        
+        # בדיקה שהערכים הם מספרים תקינים
+        if ([int]::TryParse($txtWidth.Text, [ref]$width) -and [int]::TryParse($txtHeight.Text, [ref]$height) -and $width -gt 0 -and $height -gt 0) {
+            $quality = $trackQuality.Value
+            
+            # יצירת תצוגה מקדימה
+            try {
+                $previewImage = Resize-Image -filePath $global:originalFilePath -width $width -height $height -quality $quality
+                $picBoxResized.Image = $previewImage
+                
+                # הערכת גודל הקובץ לאחר ההקטנה
+                $originalSize = (Get-Item $global:originalFilePath).Length
+                $estimatedSize = $originalSize * ($width * $height) / ($global:currentImage.Width * $global:currentImage.Height) * ($quality / 100)
+                $lblNewSize.Text = "גודל מוערך: " + [math]::Round($estimatedSize / 1MB, 2) + " MB"
+            }
+            catch {
+                # טיפול בשגיאות תצוגה מקדימה
+                $lblNewSize.Text = "גודל מוערך: לא זמין"
+            }
+        }
+    }
+}
+
+# פונקציה להצגת גודל קובץ במגה-בייט
+function Get-FileSizeInMB($filePath) {
+    $fileInfo = Get-Item $filePath
+    return [math]::Round($fileInfo.Length / 1MB, 2)
+}
+
+# פונקציה להקטנת תמונה ושמירה
+function Resize-Image {
+    param (
+        [string]$filePath,
+        [int]$width,
+        [int]$height,
+        [int]$quality
+    )
+
+    $image = [System.Drawing.Image]::FromFile($filePath)
+    $newImage = New-Object System.Drawing.Bitmap($width, $height)
+    $graphics = [System.Drawing.Graphics]::FromImage($newImage)
+    
+    # שיפור איכות התמונה המוקטנת
+    $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+    $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+    $graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+    $graphics.CompositingQuality = [System.Drawing.Drawing2D.CompositingQuality]::HighQuality
+    
+    # ציור התמונה המוקטנת
+    $graphics.DrawImage($image, (New-Object System.Drawing.Rectangle(0, 0, $width, $height)))
+    
+    # שחרור משאבים
+    $graphics.Dispose()
+    
+    return $newImage
+}
+
+# אירועי גרירה ושחרור למסגרת
+
+# אירוע כאשר קובץ נגרר מעל הטופס
+$form.add_DragEnter({
+    if ($_.Data.GetDataPresent([System.Windows.Forms.DataFormats]::FileDrop)) {
+        $_.Effect = [System.Windows.Forms.DragDropEffects]::Copy
+    }
+    else {
+        $_.Effect = [System.Windows.Forms.DragDropEffects]::None
+    }
+})
+
+# אירוע כאשר קובץ משוחרר על הטופס
+$form.add_DragDrop({
+    $files = $_.Data.GetData([System.Windows.Forms.DataFormats]::FileDrop)
+    if ($files.Length -gt 0) {
+        Process-ImageFile -filePath $files[0]
+    }
+})
+
+# אירועי גרירה ושחרור לתיבת התמונה
+
+# אירוע כאשר קובץ נגרר מעל תיבת התמונה
+$picBoxOriginal.add_DragEnter({
+    if ($_.Data.GetDataPresent([System.Windows.Forms.DataFormats]::FileDrop)) {
+        $_.Effect = [System.Windows.Forms.DragDropEffects]::Copy
+    }
+    else {
+        $_.Effect = [System.Windows.Forms.DragDropEffects]::None
+    }
+})
+
+# אירוע כאשר קובץ משוחרר על תיבת התמונה
+$picBoxOriginal.add_DragDrop({
+    $files = $_.Data.GetData([System.Windows.Forms.DataFormats]::FileDrop)
+    if ($files.Length -gt 0) {
+        Process-ImageFile -filePath $files[0]
+    }
+})
+
+# אירועי גרירה ושחרור לתווית הגרירה
+
+# אירוע כאשר קובץ נגרר מעל התווית
+$lblDragDrop.add_DragEnter({
+    if ($_.Data.GetDataPresent([System.Windows.Forms.DataFormats]::FileDrop)) {
+        $_.Effect = [System.Windows.Forms.DragDropEffects]::Copy
+        $lblDragDrop.BackColor = [System.Drawing.Color]::LightBlue
+    }
+    else {
+        $_.Effect = [System.Windows.Forms.DragDropEffects]::None
+    }
+})
+
+# אירוע כאשר גרירה יוצאת מהתווית
+$lblDragDrop.add_DragLeave({
+    $lblDragDrop.BackColor = [System.Drawing.Color]::LightGray
+})
+
+# אירוע כאשר קובץ משוחרר על התווית
+$lblDragDrop.add_DragDrop({
+    $lblDragDrop.BackColor = [System.Drawing.Color]::LightGray
+    $files = $_.Data.GetData([System.Windows.Forms.DataFormats]::FileDrop)
+    if ($files.Length -gt 0) {
+        Process-ImageFile -filePath $files[0]
+    }
+})
+
+# כפתור לבחירת תמונה
+$btnSelectImage.Add_Click({
+    $fileDialog = New-Object System.Windows.Forms.OpenFileDialog
+    $fileDialog.Filter = "תמונות (*.jpg, *.jpeg, *.png, *.bmp, *.gif)|*.jpg;*.jpeg;*.png;*.bmp;*.gif"
+    $result = $fileDialog.ShowDialog()
+
+    if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
+        Process-ImageFile -filePath $fileDialog.FileName
+    }
+})
+
+# כפתור הקטנה ושמירה
+$btnResize.Add_Click({
+    $width = 0
+    $height = 0
+    
+    # בדיקה שהערכים הם מספרים תקינים
+    if ([int]::TryParse($txtWidth.Text, [ref]$width) -and [int]::TryParse($txtHeight.Text, [ref]$height) -and $width -gt 0 -and $height -gt 0) {
+        $quality = $trackQuality.Value
+        
+        $saveDialog = New-Object System.Windows.Forms.SaveFileDialog
+        $saveDialog.Filter = "תמונות JPEG (*.jpg)|*.jpg|PNG תמונות (*.png)|*.png|BMP תמונות (*.bmp)|*.bmp"
+        $saveDialog.FileName = [System.IO.Path]::GetFileNameWithoutExtension($global:originalFilePath) + "_מוקטן"
+        
+        if ($saveDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+            try {
+                # הפעלת תהליך הקטנה ושמירה
+                $newImage = Resize-Image -filePath $global:originalFilePath -width $width -height $height -quality $quality
+                
+                # זיהוי פורמט השמירה לפי סיומת הקובץ
+                $extension = [System.IO.Path]::GetExtension($saveDialog.FileName).ToLower()
+                $format = [System.Drawing.Imaging.ImageFormat]::Jpeg
+                
+                if ($extension -eq ".png") {
+                    $format = [System.Drawing.Imaging.ImageFormat]::Png
+                }
+                elseif ($extension -eq ".bmp") {
+                    $format = [System.Drawing.Imaging.ImageFormat]::Bmp
+                }
+                
+                # שמירת התמונה בפורמט המתאים
+                if ($extension -eq ".jpg" -or $extension -eq ".jpeg") {
+                    $encoder = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq "image/jpeg" }
+                    $encoderParams = New-Object System.Drawing.Imaging.EncoderParameters(1)
+                    $encoderParam = New-Object System.Drawing.Imaging.EncoderParameter([System.Drawing.Imaging.Encoder]::Quality, $quality)
+                    $encoderParams.Param[0] = $encoderParam
+                    $newImage.Save($saveDialog.FileName, $encoder, $encoderParams)
+                }
+                else {
+                    $newImage.Save($saveDialog.FileName, $format)
+                }
+                
+                # הצגת הודעת סיום
+                $newFileSize = Get-FileSizeInMB $saveDialog.FileName
+                $originalFileSize = Get-FileSizeInMB $global:originalFilePath
+                $savings = [math]::Round(100 * (1 - $newFileSize / $originalFileSize), 1)
+                
+                [System.Windows.Forms.MessageBox]::Show("התמונה נשמרה כ-" + $saveDialog.FileName + "`n`nגודל מקורי: " + $originalFileSize + " MB`nגודל חדש: " + $newFileSize + " MB`nחיסכון: " + $savings + "%", "פעולה הושלמה", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+                
+                # שחרור משאבים
+                $newImage.Dispose()
+            }
+            catch {
+                [System.Windows.Forms.MessageBox]::Show("שגיאה בשמירת הקובץ: " + $_.Exception.Message, "שגיאה", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+            }
+        }
+    }
+    else {
+        [System.Windows.Forms.MessageBox]::Show("נא להזין ערכי רוחב וגובה תקינים", "שגיאה", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+    }
+})
+
+# סיום סשן
+$form.add_FormClosed({
+    if ($global:currentImage) {
+        $global:currentImage.Dispose()
+    }
+})
+
+# הצגת הטופס
+$form.ShowDialog()
